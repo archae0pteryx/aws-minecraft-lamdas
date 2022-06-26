@@ -1,0 +1,15 @@
+{
+  "name": "minecraft-lamdas",
+  "version": "1.0.0",
+  "description": "",
+  "main": "original_lamda.js",
+  "scripts": {
+    "test": "jest src"
+  },
+  "keywords": [],
+  "author": "“Ryan <“aarchaeopteryxx@gmail.com”> (https://github.com/archae0pteryx)",
+  "license": "ISC",
+  "devDependencies": {
+    "jest": "^28.1.1"
+  }
+}
