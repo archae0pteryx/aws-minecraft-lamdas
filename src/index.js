@@ -1,104 +1,55 @@
 const AWS = require('aws-sdk')
-const startHandler = require('./ec2-start')
-const stopHandler = require('./ec2-stop')
-const stateChangeHandler = require('./ec2-state')
+const { handleEc2Start } = require('./handleEc2Start')
+const { handleEc2Stop } = require('./handleEc2Stop')
+const { handleEc2StateChange } = require('./handleEc2StateChange')
+const { handleEc2Restart } = require('./handleEc2Restart')
 
 const ec2 = new AWS.EC2()
 
-exports.handler = async (event) => {
-  // TODO implement
-  const response = {
-    statusCode: 200,
-    body: JSON.stringify('Hello from Lambda!'),
-  }
-  return response
+const KEYWORD_COMMANDS = {
+  'SERVER START': handleEc2Start,
+  'SERVER STOP': handleEc2Stop,
+  'SERVER RESTART': handleEc2Restart,
+  'RUNNING': handleEc2StateChange,
+  'STOPPED': handleEc2StateChange
 }
 
+async function handleSnsEvent(ec2, { Message }) {
+  const { messageBody } = JSON.parse(Message)
+  return KEYWORD_COMMANDS[messageBody](ec2)
+}
 
+function normalizeEvent(event) {
+  const isPinpointCommand = event.Records && event.Records.length !== 0
+  const isStateChangeEvent = event.source === 'aws.ec2'
+  const isDescribe = event.Reservations?.[0]?.Instances?.[0].State.Name
+  if (isPinpointCommand) {
+    const message = JSON.parse(event.Records[0].Sns.Message)
+    return message.messageBody
+  } else if (isStateChangeEvent) {
+    return event.detail.state.toUpperCase()
+  } else if (isDescribe) {
+    return event.Reservations?.[0]?.Instances?.[0].State?.Name.toUpperCase()
+  } else {
+    throw new Error(`Unknown Event: [${JSON.stringify(event)}]`)
+  }
+}
 
-// const handleServerRestart = async () => {
-//   const params = {
-//     InstanceIds: [process.env.INSTANCE_ID],
-//   }
-//   await ec2.rebootInstances(params)
-//   console.log(`[+] rebooting ${process.env.INSTANCE_ID}`)
-// }
+exports.normalizeEvent = normalizeEvent
 
-// const handleServerStart = async () => {
-//   const params = {
-//     InstanceIds: [process.env.INSTANCE_ID],
-//   }
-//   const res = await ec2.startInstances(params).promise()
-//   return {
-//     statusCode: 200,
-//     body: {
-//       status: 200,
-//       body: `[+] instance ${process.env.INSTANCE_ID} started`,
-//       response: res,
-//     },
-//   }
-// }
-
-// const handleServerStop = async () => {
-//   const params = {
-//     InstanceIds: [process.env.INSTANCE_ID],
-//   }
-//   const data = await ec2.describeInstances(params).promise()
-//   const instance = data.Reservations?.[0].Instances?.[0] || {}
-//   console.log(`DEBUG: ${JSON.stringify(data)}`)
-//   if (
-//     instance?.State?.Name !== 'stopped' &&
-//     shouldStopServer(instance.LaunchTime)
-//   ) {
-//     console.log(
-//       `[+] stopping ${
-//         process.env.INSTANCE_ID
-//       } at ${Date.now().toLocaleString()}`
-//     )
-//     const res = await ec2.stopInstances(params).promise()
-//     return {
-//       statusCode: 200,
-//       body: `stopped ${process.env.INSTANCE_ID}`,
-//       response: res,
-//     }
-//   }
-//   return {
-//     statusCode: 200,
-//     body: `[+] tried to stop: ${process.env.INSTANCE_ID} but it is not running`,
-//   }
-// }
-
-// const shouldStopServer = (launchedAt) => {
-//   const launchTime = new Date(launchedAt)
-//   const now = new Date()
-//   return (now - launchTime) / 3600000 > process.env.MAX_HOURS
-// }
-
-// const KEYWORD_COMMANDS = {
-//   'SERVER START': handleServerStart,
-//   'SERVER STOP': handleServerStop,
-//   'SERVER RESTART': handleServerRestart,
-// }
-
-// exports.handler = async (event) => {
-//   try {
-//     const rawMessage = event.Records?.[0].Sns?.Message || ''
-//     const command = JSON.parse(rawMessage)?.messageBody || ''
-//     if (!rawMessage || !command) {
-//       throw new Error(
-//         `no command from trigger received ${JSON.stringify(event)}`
-//       )
-//     }
-
-//     const res = await KEYWORD_COMMANDS[command]()
-//     console.log(`[+] ran command [${command}] - [${JSON.stringify(res)}]`)
-//     return res
-//   } catch (error) {
-//     console.error(error)
-//     const response = {
-//       statusCode: 500,
-//       body: 'error during script',
-//     }
-//     return response
-//   }
-// }
+exports.handler = async (event) => {
+  try {
+    const trigger = normalizeEvent(event)
+    const res = KEYWORD_COMMANDS[trigger](event)
+    return {
+      status: 200,
+      body: res,
+    }
+  } catch (err) {
+    console.error(err)
+    return {
+      status: 500,
+      error: err.message,
+    }
+  }
+}
