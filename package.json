@@ -1,15 +1,16 @@
 {
   "name": "minecraft-lamdas",
   "version": "1.0.0",
-  "description": "",
-  "main": "original_lamda.js",
+  "description": "Lamda fns to control aws minecraft server",
+  "main": "src/index.js",
   "scripts": {
-    "test": "jest src"
+    "test": "jest ./tests"
   },
   "keywords": [],
   "author": "“Ryan <“aarchaeopteryxx@gmail.com”> (https://github.com/archae0pteryx)",
   "license": "ISC",
   "devDependencies": {
+    "dotenv": "^16.0.1",
     "jest": "^28.1.1"
   }
 }
