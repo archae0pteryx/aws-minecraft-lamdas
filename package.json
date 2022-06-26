@@ -4,12 +4,13 @@
   "description": "Lamda fns to control aws minecraft server",
   "main": "src/index.js",
   "scripts": {
-    "test": "jest ./tests"
+    "test": "jest --watch"
   },
   "keywords": [],
   "author": "“Ryan <“aarchaeopteryxx@gmail.com”> (https://github.com/archae0pteryx)",
   "license": "ISC",
   "devDependencies": {
+    "aws-sdk": "^2.1162.0",
     "dotenv": "^16.0.1",
     "jest": "^28.1.1"
   }
