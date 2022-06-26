@@ -1,8 +1,7 @@
 const { INSTANCE_ID } = process.env
 
-async function handleEc2StateChange(ec2, event) {
-  console.log(`[+] State change triggered for ${INSTANCE_ID}`)
-  console.log(JSON.stringify(event))
+async function handleEc2StateChange(ec2) {
+  console.log(`HANDLE CHANGE NOTIFICATION`)
 }
 
-module.exports = { handleEc2StateChange }
+exports.handleEc2StateChange = handleEc2StateChange

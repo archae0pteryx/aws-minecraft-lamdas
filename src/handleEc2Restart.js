@@ -1,15 +1,17 @@
+const { currentInstanceState } = require('./instance')
+
 const { INSTANCE_ID } = process.env
 
-async function handleEc2Restart(ec2, event) {
-  console.log(`[+] Restart triggered for ${INSTANCE_ID}`)
-  console.log(JSON.stringify(event))
+async function handleEc2Restart(ec2) {
+  const currentState = await currentInstanceState(ec2)
+  if (currentState === 'RUNNING') {
+    await ec2.rebootInstances({
+      InstanceIds: [process.env.INSTANCE_ID],
+    })
+    console.log(`[+] Restarting [${INSTANCE_ID}]`)
+    return
+  }
+  console.log(`[+] Restart ignored. Server isn't up.`)
 }
 
-module.exports = { handleEc2Restart }
-// const handleServerRestart = async () => {
-//   const params = {
-//     InstanceIds: [process.env.INSTANCE_ID],
-//   }
-//   await ec2.rebootInstances(params)
-//   console.log(`[+] rebooting ${process.env.INSTANCE_ID}`)
-// }
+exports.handleEc2Restart = handleEc2Restart
