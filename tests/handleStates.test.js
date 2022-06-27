@@ -1,7 +1,7 @@
-const { currentInstanceState } = require('../src/instance')
-const { handleEc2Start } = require('../src/handleEc2Start')
-const { handleEc2Stop } = require('../src/handleEc2Stop')
-const { handleEc2Reset } = require('../src/handleEc2Restart')
+const { currentInstanceState } = require('../old.src/instance')
+const { handleEc2Start } = require('../old.src/handleEc2Start')
+const { handleEc2Stop } = require('../old.src/handleEc2Stop')
+const { handleEc2Reset } = require('../old.src/handleEc2Restart')
 
 const { MOCK_INSTANCE_STATUS } = require('./fixtures/mockInstanceStatus')
 const AWS = require('aws-sdk')
@@ -30,6 +30,6 @@ describe('states handlers', () => {
   })
 
   it('calls stop trigger', async () => {
-    
+
   })
 })

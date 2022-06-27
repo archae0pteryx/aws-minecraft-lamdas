@@ -3,11 +3,14 @@ const { LIFETIME_MINS } = process.env
 
 async function handleScheduledCheck(ec2) {
   const now = Date.now()
-  const data = await ec2.describeInstances(params)
+  const data = await ec2.describeInstances({
+    InstanceIds: [INSTANCE_ID],
+  })
   const instance = data.Reservations?.[0].Instances?.[0]
   const launchTime = Date.parse(instance.LaunchTime)
   const age = Math.floor((now - launchTime) / 1000 / 60)
   if (age >= LIFETIME_MINS) {
+    console.log(`[+] Time expired for [${INSTANCE_ID}]`)
     await handleEc2Stop(ec2)
     return
   }
