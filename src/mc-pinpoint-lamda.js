@@ -10,7 +10,7 @@ const EC2_PARAMS = {
 
 async function _currentInstanceState() {
   const data = await ec2.describeInstanceStatus(EC2_PARAMS).promise()
-  return data?.InstanceStatuses?.[0].InstanceState.Name.toUpperCase()
+  return data?.InstanceStatuses?.[0]?.InstanceState?.Name?.toUpperCase()
 }
 
 async function handleEc2Restart() {
@@ -46,9 +46,8 @@ const KEYWORD_COMMANDS = {
   'SERVER RESTART': handleEc2Restart,
 }
 
-exports.handler = async (event) => {
+exports.handler = async (event, context, callback) => {
   try {
-    // console.log(JSON.stringify(event))
     const message = JSON.parse(event.Records[0].Sns.Message)
     const res = await KEYWORD_COMMANDS?.[message.messageBody]()
 

@@ -1,0 +1,8 @@
+{
+  "Template": {
+    "TemplateName": "ServerStateChangeTemplate",
+    "SubjectPart": "Server is {{state}}",
+    "HtmlPart": "<h1>Server State Change</h1><p>{{state}}</p>",
+    "TextPart": "Server state changed to {{state}}"
+  }
+}
