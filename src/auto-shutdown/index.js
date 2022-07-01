@@ -1,21 +1,6 @@
-const AWS = require('aws-sdk')
-
-const ec2 = new AWS.EC2()
-const hasOnlinePlayer = require('./hasOnlinePlayer')
-
-const { INSTANCE_ID, SHUTDOWN_AFTER_MINS } = process.env
-
-const EC2_PARAMS = {
-  InstanceIds: [INSTANCE_ID],
-}
-
-function _shutdownInstance() {
-  return ec2
-    .stopInstances({
-      InstanceIds: [INSTANCE_ID],
-    })
-    .promise()
-}
+const { ec2Instance } = require('ec2Commands')
+const { hasOnlinePlayer } = require('./hasOnlinePlayer')
+const { SHUTDOWN_AFTER_MINS } = process.env
 
 function _hasTimeExpired(launchTime) {
   const now = Date.now()
@@ -23,28 +8,40 @@ function _hasTimeExpired(launchTime) {
   return serverUpForMins >= SHUTDOWN_AFTER_MINS
 }
 
-function _shouldServerShutdown(launchTime) {
-  return _hasTimeExpired(launchTime) && !hasOnlinePlayer()
+async function _shouldServerShutdown(launchTime) {
+  const isStopped = await ec2Instance('isStopped')
+  console.log(isStopped)
+  if (isStopped) {
+    return false
+  }
+  const playersOnline = await hasOnlinePlayer()
+  return _hasTimeExpired(launchTime) && !playersOnline
 }
 
 exports.handler = async (event) => {
-  // const now = Date.now()
-  const data = await ec2.describeInstances(EC2_PARAMS).promise()
-  const instance = data.Reservations?.[0].Instances?.[0]
-  if (!instance) {
-    throw new Error('Autoshutdown cant find instance')
-  }
-  const launchTime = Date.parse(instance.LaunchTime)
-  const shouldShutdown = _shouldServerShutdown(instance.LaunchTime)
-  if (shouldShutdown) {
-    const res = await _shutdownInstance()
+  try {
+    const instance = await ec2Instance()
+    if (!instance) {
+      throw new Error('Autoshutdown cant find instance')
+    }
+    const launchTime = Date.parse(instance.LaunchTime)
+    const shouldShutdown = _shouldServerShutdown(launchTime)
+    if (shouldShutdown) {
+      const res = await ec2Instance('stop')
+      return {
+        statusCode: 200,
+        body: res,
+      }
+    }
     return {
       statusCode: 200,
-      body: res,
+      body: 'shutdown check',
     }
-  }
-  return {
-    statusCode: 200,
-    body: 'Should not shutdown server',
+  } catch (e) {
+    console.error(e.message)
+    return {
+      statusCode: 500,
+      body: e.message || 'unknown error',
+    }
   }
 }
