@@ -4,6 +4,7 @@ sudo useradd minecraft
 sudo usermod -a -G minecraft ec2-user
 sudo mkdir -p /opt/minecraft/server
 sudo chmod -R 775 /opt/minecraft
+sudo chown -R minecraft:minecraft /opt/minecraft
 
 # Install java
 sudo rpm --import https://yum.corretto.aws/corretto.key

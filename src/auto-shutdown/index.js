@@ -1,10 +1,7 @@
 const AWS = require('aws-sdk')
-
 const ec2 = new AWS.EC2()
 
-const { INSTANCE_ID } = process.env
-
-const SHUTDOWN_AFTER = 60 // min
+const { INSTANCE_ID, SHUTDOWN_AFTER_MINS } = process.env
 
 const EC2_PARAMS = {
   InstanceIds: [INSTANCE_ID],
@@ -19,7 +16,7 @@ exports.handler = async (event) => {
   }
   const launchTime = Date.parse(instance.LaunchTime)
   const serverUpForMins = Math.floor((now - launchTime) / 1000 / 60)
-  if (serverUpForMins >= SHUTDOWN_AFTER) {
+  if (serverUpForMins >= SHUTDOWN_AFTER_MINS) {
     await ec2
       .stopInstances({
         InstanceIds: [INSTANCE_ID],
